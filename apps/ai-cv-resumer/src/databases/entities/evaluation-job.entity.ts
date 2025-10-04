@@ -1,9 +1,9 @@
 import { BaseEntityWithSoftDelete } from '@global/databases/entities/base.entity';
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
-import { IEvaluationJobAttachment } from '../interfaces/evaluation-job-attachment.interface';
 import { IEvaluationJob } from '../interfaces/evaluation-job.interface';
-import { EvaluationJobAttachment } from './evaluation-job-attachment.entity';
+import { IUserAttachment } from '../interfaces/user-attachment.interface';
+import { UserAttachment } from './user-attachment.entity';
 
 @Entity('evaluation_jobs')
 export class EvaluationJob
@@ -59,10 +59,28 @@ export class EvaluationJob
   })
   evaluatedAt?: string | null;
 
-  @OneToMany(
-    () => EvaluationJobAttachment,
-    (attachment) => attachment.evaluationJob,
+  @Column({
+    name: 'cv_attachment_id',
+    type: 'uuid',
+    nullable: true,
+  })
+  cvAttachmentId?: string | null;
+
+  @Column({
+    name: 'project_attachment_id',
+    type: 'uuid',
+    nullable: true,
+  })
+  projectAttachmentId?: string | null;
+
+  @ManyToOne(() => UserAttachment, (attachment) => attachment.cvEvaluationJob)
+  @JoinColumn({ name: 'cv_attachment_id' })
+  cvAttachment?: IUserAttachment | null;
+
+  @ManyToOne(
+    () => UserAttachment,
+    (attachment) => attachment.projectEvaluationJob,
   )
-  @JoinColumn({ name: 'evaluation_job_id' })
-  jobAttachments?: IEvaluationJobAttachment[] | null;
+  @JoinColumn({ name: 'project_attachment_id' })
+  projectAttachment?: IUserAttachment | null;
 }

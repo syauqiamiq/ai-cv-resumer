@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import cookieParser from 'cookie-parser';
+import * as cookieParser from 'cookie-parser';
 import { aiCvResumerENVConfig } from './env.config';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { HttpExceptionFilter } from '@global/filters/http-exception/http-exception.filter';

@@ -1,4 +1,4 @@
-export enum JobStatus {
+export enum EEvaluationJobStatus {
   PENDING = 'PENDING',
   PROCESSING = 'PROCESSING',
   COMPLETED = 'COMPLETED',

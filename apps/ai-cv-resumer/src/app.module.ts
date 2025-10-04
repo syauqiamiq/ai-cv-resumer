@@ -1,21 +1,28 @@
 import { Module } from '@nestjs/common';
-import { AppService } from './app.service';
+
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { JwtModule } from '@nestjs/jwt';
 
 import { CacheModule } from '@nestjs/cache-manager';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { aiCvResumerENVConfig } from './env.config';
 import { databaseConfig } from './databases/database-config';
+import { EvaluationJobModule } from './modules/v1/evaluation-job/evaluation-job.module';
+import { UserAttachmentModule } from './modules/v1/user-attachment/user-attachment.module';
+import { S3Module } from '@app/s3';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot(databaseConfig),
     JwtModule.register({
       global: true,
-      secret: aiCvResumerENVConfig.jwt.jwtEmployeeSecret,
+      secret: aiCvResumerENVConfig.jwt.jwtSecret,
+      signOptions: {
+        expiresIn: aiCvResumerENVConfig.jwt.jwtExpire,
+      },
     }),
     CacheModule.register({
       isGlobal: true,
@@ -30,7 +37,9 @@ import { databaseConfig } from './databases/database-config';
         },
       ],
     }),
+    S3Module,
+    UserAttachmentModule,
   ],
-  providers: [AppService],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

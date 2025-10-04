@@ -1,10 +1,12 @@
 import { IBaseEntityWithSoftDelete } from '@global/databases/interfaces/base.interface';
 import { IEvaluationJob } from './evaluation-job.interface';
 
-export interface IEvaluationJobAttachment extends IBaseEntityWithSoftDelete {
-  evaluationJobId: string | null;
+export interface IUserAttachment extends IBaseEntityWithSoftDelete {
   documentName: string;
   path: string;
   type: string;
-  evaluationJob?: IEvaluationJob;
+  mimeType?: string;
+  size?: number;
+  cvEvaluationJob?: IEvaluationJob;
+  projectEvaluationJob?: IEvaluationJob;
 }

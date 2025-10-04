@@ -23,6 +23,7 @@ export class S3Service {
 
   constructor() {
     this.s3 = new S3Client({
+      region: libraryENVConfig.s3.region || 'ap-southeast-1',
       endpoint: libraryENVConfig.s3.endpoint || undefined,
       forcePathStyle: true,
       credentials: {

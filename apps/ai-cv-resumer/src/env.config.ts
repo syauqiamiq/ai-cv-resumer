@@ -43,8 +43,8 @@ export const aiCvResumerENVConfig = {
     },
   },
   jwt: {
-    jwtEmployeeSecret: process.env.JWT_EMPLOYEE_SECRET || '',
-    jwtEmployeeExpire: process.env.JWT_EMPLOYEE_EXPIRE || '',
+    jwtSecret: process.env.JWT_SECRET || '',
+    jwtExpire: process.env.JWT_EXPIRE || '',
   },
   redis: {
     host: process.env.REDIS_HOST || 'admin',
