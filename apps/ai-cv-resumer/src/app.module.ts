@@ -4,15 +4,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { JwtModule } from '@nestjs/jwt';
 
-import { CacheModule } from '@nestjs/cache-manager';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { aiCvResumerENVConfig } from './env.config';
-import { databaseConfig } from './databases/database-config';
-import { EvaluationJobModule } from './modules/v1/evaluation-job/evaluation-job.module';
-import { UserAttachmentModule } from './modules/v1/user-attachment/user-attachment.module';
 import { S3Module } from '@app/s3';
+import { CacheModule } from '@nestjs/cache-manager';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { databaseConfig } from './databases/database-config';
+import { aiCvResumerENVConfig } from './env.config';
+import { UserAttachmentModule } from './modules/v1/user-attachment/user-attachment.module';
+import { EvaluationJobModule } from './modules/v1/evaluation-job/evaluation-job.module';
 
 @Module({
   imports: [
@@ -39,6 +39,7 @@ import { APP_GUARD } from '@nestjs/core';
     }),
     S3Module,
     UserAttachmentModule,
+    EvaluationJobModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

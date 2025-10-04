@@ -3,6 +3,7 @@ import { IUserAttachment } from './user-attachment.interface';
 
 export interface IEvaluationJob extends IBaseEntityWithSoftDelete {
   status: string | null;
+  jobTitle: string | null;
   cv_result?: string | null;
   project_result?: string | null;
   final_result?: string | null;

@@ -17,6 +17,12 @@ export class EvaluationJob
   status: string | null;
 
   @Column({
+    name: 'job_title',
+    type: 'varchar',
+  })
+  jobTitle: string | null;
+
+  @Column({
     name: 'cv_result',
     type: 'jsonb',
     nullable: true,
