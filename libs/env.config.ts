@@ -8,4 +8,7 @@ export const libraryENVConfig = {
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
     bucketName: process.env.AWS_S3_BUCKET_NAME || '',
   },
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY || '',
+  },
 };
