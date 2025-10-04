@@ -133,6 +133,7 @@
       "^@app/chroma(|/.*)$": "<rootDir>/libs/chroma/src/$1",
       "^@app/gemini(|/.*)$": "<rootDir>/libs/gemini/src/$1",
       "^@app/kafka-mq(|/.*)$": "<rootDir>/libs/kafka-mq/src/$1",
+      "^@app/pdf(|/.*)$": "<rootDir>/libs/pdf/src/$1",
       "^@app/s3(|/.*)$": "<rootDir>/libs/s3/src/$1"
     }
   }

@@ -55,6 +55,15 @@
         "tsConfigPath": "libs/kafka-mq/tsconfig.lib.json"
       }
     },
+    "pdf": {
+      "type": "library",
+      "root": "libs/pdf",
+      "entryFile": "index",
+      "sourceRoot": "libs/pdf/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/pdf/tsconfig.lib.json"
+      }
+    },
     "project-worker": {
       "type": "application",
       "root": "apps/project-worker",
