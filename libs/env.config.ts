@@ -11,4 +11,7 @@ export const libraryENVConfig = {
   gemini: {
     apiKey: process.env.GEMINI_API_KEY || '',
   },
+  chroma: {
+    host: process.env.CHROMA_HOST || 'localhost',
+  },
 };
