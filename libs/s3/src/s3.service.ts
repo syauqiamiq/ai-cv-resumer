@@ -23,7 +23,8 @@ export class S3Service {
 
   constructor() {
     this.s3 = new S3Client({
-      region: libraryENVConfig.s3.region,
+      endpoint: libraryENVConfig.s3.endpoint || undefined,
+      forcePathStyle: true,
       credentials: {
         accessKeyId: libraryENVConfig.s3.accessKeyId,
         secretAccessKey: libraryENVConfig.s3.secretAccessKey,

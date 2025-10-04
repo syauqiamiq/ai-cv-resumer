@@ -1,4 +1,5 @@
 import * as dotenv from 'dotenv';
+import e from 'express';
 dotenv.config({ path: 'libs/.env' });
 
 export const libraryENVConfig = {
@@ -7,6 +8,7 @@ export const libraryENVConfig = {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
     bucketName: process.env.AWS_S3_BUCKET_NAME || '',
+    endpoint: process.env.AWS_S3_ENDPOINT || '',
   },
   gemini: {
     apiKey: process.env.GEMINI_API_KEY || '',
