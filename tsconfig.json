@@ -22,30 +22,14 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@app/chroma": [
-        "libs/chroma/src"
-      ],
-      "@app/chroma/*": [
-        "libs/chroma/src/*"
-      ],
-      "@app/gemini": [
-        "libs/gemini/src"
-      ],
-      "@app/gemini/*": [
-        "libs/gemini/src/*"
-      ],
-      "@app/kafka-mq": [
-        "libs/kafka-mq/src"
-      ],
-      "@app/kafka-mq/*": [
-        "libs/kafka-mq/src/*"
-      ],
-      "@app/s3": [
-        "libs/s3/src"
-      ],
-      "@app/s3/*": [
-        "libs/s3/src/*"
-      ]
+      "@app/chroma": ["libs/chroma/src"],
+      "@app/chroma/*": ["libs/chroma/src/*"],
+      "@app/gemini": ["libs/gemini/src"],
+      "@app/gemini/*": ["libs/gemini/src/*"],
+      "@app/kafka-mq": ["libs/kafka-mq/src"],
+      "@app/kafka-mq/*": ["libs/kafka-mq/src/*"],
+      "@app/s3": ["libs/s3/src"],
+      "@app/s3/*": ["libs/s3/src/*"]
     }
   }
 }
