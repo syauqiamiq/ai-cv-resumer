@@ -1,5 +1,5 @@
 export enum EEvaluationJobStatus {
-  PENDING = 'PENDING',
+  QUEUED = 'QUEUED',
   PROCESSING = 'PROCESSING',
   COMPLETED = 'COMPLETED',
   FAILED = 'FAILED',

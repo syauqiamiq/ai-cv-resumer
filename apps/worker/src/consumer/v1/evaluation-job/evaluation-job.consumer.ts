@@ -17,6 +17,7 @@ import { evaluateProjectReportPrompt } from 'apps/worker/src/common/prompts/eval
 import { overallSummaryPrompt } from 'apps/worker/src/common/prompts/overall-summary.prompt';
 import { EEvaluationJobStatus } from 'apps/worker/src/common/enums/evaluation-job-status.enum';
 import { InjectRepository } from '@nestjs/typeorm';
+import { cleanAIJsonResponse } from '@global/functions/json-ai-cleaner';
 
 @Processor('evaluation-queue')
 export class EvaluationJobConsumer extends WorkerHost {
@@ -105,7 +106,6 @@ export class EvaluationJobConsumer extends WorkerHost {
           embeddedContent.embeddings[0].values,
           5,
         );
-        console.log('Context Result:', contextResult);
       }
 
       // 5. Use Gemini to evaluate CV against Job Description and generate feedback
@@ -117,8 +117,6 @@ export class EvaluationJobConsumer extends WorkerHost {
           contextResult.join('\n'),
         );
 
-        console.log('CV Evaluation Prompt:', cvEvaluationPrompt);
-
         const response = await this.geminiService.generateContent({
           model: 'gemini-2.5-flash',
           contents: cvEvaluationPrompt,
@@ -128,8 +126,7 @@ export class EvaluationJobConsumer extends WorkerHost {
           },
         });
 
-        parsedCvResult = JSON.parse(response.text);
-        console.log('Parsed CV Result:', parsedCvResult);
+        parsedCvResult = cleanAIJsonResponse(response.text);
 
         await this.evaluationJobRepository.update(evaluationJobData.id, {
           cvResult: parsedCvResult,
@@ -159,8 +156,9 @@ export class EvaluationJobConsumer extends WorkerHost {
           status: EEvaluationJobStatus.PROCESSING,
         });
 
-        parsedProjectReportResult = JSON.parse(projectReportResponse.text);
-        console.log('Parsed Project Report Result:', parsedProjectReportResult);
+        parsedProjectReportResult = cleanAIJsonResponse(
+          projectReportResponse.text,
+        );
 
         await this.evaluationJobRepository.update(evaluationJobData.id, {
           projectResult: parsedProjectReportResult,
@@ -188,18 +186,14 @@ export class EvaluationJobConsumer extends WorkerHost {
           },
         );
 
-        const parsedOverallSummaryResult = JSON.parse(
+        const parsedOverallSummaryResult = cleanAIJsonResponse(
           overallSummaryResponse.text,
-        );
-        console.log(
-          'Parsed Overall Summary Result:',
-          parsedOverallSummaryResult,
         );
 
         const finalResult: any = {
           cv_match_rate: parsedCvResult
-            ? parsedCvResult.cv_score
-            : evaluationJobData.cvResult?.cv_score,
+            ? parseFloat(parsedCvResult.cv_score) * 0.2
+            : parseFloat(evaluationJobData.cvResult?.cv_score) * 0.2,
           cv_feedback: parsedCvResult
             ? parsedCvResult.feedback
             : evaluationJobData.cvResult?.feedback,
@@ -214,7 +208,6 @@ export class EvaluationJobConsumer extends WorkerHost {
             evaluationJobData.finalResult?.overall_summary,
         };
 
-        console.log('Final Response', finalResult);
         await this.evaluationJobRepository.update(evaluationJobData.id, {
           finalResult: finalResult,
         });

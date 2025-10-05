@@ -27,21 +27,21 @@ export class EvaluationJob
     type: 'jsonb',
     nullable: true,
   })
-  cv_result?: string | null;
+  cvResult?: any | null;
 
   @Column({
     name: 'project_result',
     type: 'jsonb',
     nullable: true,
   })
-  project_result?: string | null;
+  projectResult?: any | null;
 
   @Column({
     name: 'final_result',
     type: 'jsonb',
     nullable: true,
   })
-  final_result?: string | null;
+  finalResult?: any | null;
 
   @Column({
     name: 'retry_count',

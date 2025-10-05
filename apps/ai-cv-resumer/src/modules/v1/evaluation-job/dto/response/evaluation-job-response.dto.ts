@@ -3,15 +3,23 @@ import { IEvaluationJob } from 'apps/ai-cv-resumer/src/databases/interfaces/eval
 export class EvaluationJobResponseDto {
   jobId: string;
   status: string;
+  result?: any | null;
 
-  static toResponse(data: IEvaluationJob): EvaluationJobResponseDto {
+  static toResponse(data: {
+    jobId: string;
+    status: string;
+    result?: any | null;
+  }): EvaluationJobResponseDto {
     return {
-      jobId: data.id,
+      jobId: data.jobId,
       status: data.status,
+      result: data.result,
     };
   }
 
-  static toResponses(data: IEvaluationJob[]): EvaluationJobResponseDto[] {
+  static toResponses(
+    data: { jobId: string; status: string; result?: any | null }[],
+  ): EvaluationJobResponseDto[] {
     return data.map((v) => this.toResponse(v));
   }
 }

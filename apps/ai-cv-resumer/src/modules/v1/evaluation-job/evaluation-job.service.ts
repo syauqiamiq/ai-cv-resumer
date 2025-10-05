@@ -34,7 +34,7 @@ export class EvaluationJobService {
       cvAttachmentId: createEvaluationJobDto.cvAttachmentId,
       projectAttachmentId: createEvaluationJobDto.projectAttachmentId,
       jobTitle: createEvaluationJobDto.jobTitle,
-      status: EEvaluationJobStatus.PENDING,
+      status: EEvaluationJobStatus.QUEUED,
     });
 
     const jobParam = {
@@ -55,7 +55,11 @@ export class EvaluationJobService {
       },
     });
 
-    return savedJob;
+    return {
+      jobId: savedJob.id,
+      status: savedJob.status,
+      result: null,
+    };
   }
 
   async resultByJobId(jobId: string) {
@@ -64,7 +68,17 @@ export class EvaluationJobService {
         id: jobId,
       },
     });
-    return job;
+    return {
+      jobId: job.id,
+      status: job.status,
+      result: job.finalResult && {
+        cvMatchRate: job.finalResult?.cv_match_rate || null,
+        cvFeedback: job.finalResult?.cv_feedback || null,
+        projectScore: job.finalResult?.project_score || null,
+        projectFeedback: job.finalResult?.project_feedback || null,
+        overallSummary: job.finalResult?.overall_summary || null,
+      },
+    };
   }
 
   async triggerRAG() {

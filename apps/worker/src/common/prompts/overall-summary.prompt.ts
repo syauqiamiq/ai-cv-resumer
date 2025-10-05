@@ -27,12 +27,12 @@ export function overallSummaryPrompt(
         1. Evaluate the both candidate’s Project Report and CV Evaluation Result based strictly on the provided ${jobTitle} Job Description.
         2. Focus on ${jobTitle} relevance and Overall Summary based on given data and context.
         3. Provide reasoning behind overall summary of this job fitment.
-        4. Include any additional comments or insights for the hiring team.
-        5. Return ONLY a RAW valid JSON object (no markdown, no code fences):
-
+        4. Be concise and to the point, dont add additional JSON fields except defined field below.
+        5. Return only a valid JSON object without any markdown or explanations.
+        
         JSON schema:
         {
-            "overall_summary": <summary>,
+        "overall_summary": <summary>,
         }
     `;
 }

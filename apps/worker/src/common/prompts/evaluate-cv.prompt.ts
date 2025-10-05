@@ -21,7 +21,7 @@ export function evaluateCvPrompt(
         2. Focus on ${jobTitle} relevance, technical depth, clarity, and role alignment.
         3. Score each rubric dimension from 1 (poor) to 5 (excellent).
         4. Provide reasoning behind each score.
-        5. Return ONLY a RAW valid JSON object (no markdown, no code fences).
+        5. Return only a valid JSON object without any markdown or explanations.
         
         JSON schema:
         {
