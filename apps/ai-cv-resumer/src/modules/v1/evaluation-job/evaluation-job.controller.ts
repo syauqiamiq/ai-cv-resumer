@@ -1,4 +1,4 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, Param, Post } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { EvaluationJobService } from './evaluation-job.service';
 import { CreateEvaluationJobDto } from './dto/request/create-evaluation-job.dto';
@@ -9,6 +9,15 @@ import { EvaluationJobResponseDto } from './dto/response/evaluation-job-response
 @Controller()
 export class EvaluationJobController {
   constructor(private readonly evaluationJobService: EvaluationJobService) {}
+
+  // @Get('trigger-rag')
+  // async triggerRag(): Promise<IApiResponse<EvaluationJobResponseDto>> {
+  //   await this.evaluationJobService.triggerRAG();
+  //   return {
+  //     message: 'RAG triggered successfully',
+  //     data: null,
+  //   };
+  // }
 
   @Post('evaluate')
   async createEvaluationJob(
@@ -25,7 +34,7 @@ export class EvaluationJobController {
 
   @Get('result/:jobId')
   async getResultByJobId(
-    @Payload('jobId') jobId: string,
+    @Param('jobId') jobId: string,
   ): Promise<IApiResponse<EvaluationJobResponseDto>> {
     const result = await this.evaluationJobService.resultByJobId(jobId);
     return {

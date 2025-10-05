@@ -13,6 +13,10 @@ import { databaseConfig } from './databases/database-config';
 import { aiCvResumerENVConfig } from './env.config';
 import { UserAttachmentModule } from './modules/v1/user-attachment/user-attachment.module';
 import { EvaluationJobModule } from './modules/v1/evaluation-job/evaluation-job.module';
+import { BullModule } from '@nestjs/bullmq';
+import { GeminiModule } from '@app/gemini';
+import { PdfModule } from '@app/pdf';
+import { ChromaModule } from '@app/chroma';
 
 @Module({
   imports: [
@@ -37,7 +41,17 @@ import { EvaluationJobModule } from './modules/v1/evaluation-job/evaluation-job.
         },
       ],
     }),
+    BullModule.forRoot({
+      connection: {
+        host: aiCvResumerENVConfig.redis.host,
+        port: aiCvResumerENVConfig.redis.port,
+        password: aiCvResumerENVConfig.redis.pass,
+      },
+    }),
     S3Module,
+    GeminiModule,
+    PdfModule,
+    ChromaModule,
     UserAttachmentModule,
     EvaluationJobModule,
   ],

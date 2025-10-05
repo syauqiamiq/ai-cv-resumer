@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
-dotenv.config({ path: 'apps/ai-cv-resumer/.env' });
+dotenv.config({ path: 'apps/worker/.env' });
 
-export const aiCvResumerENVConfig = {
+export const workerENVConfig = {
   app: {
     env: process.env.APP_ENV || 'development',
     runningPort: process.env.RUNNING_PORT || 3000,
@@ -25,6 +25,11 @@ export const aiCvResumerENVConfig = {
     password: process.env.SMTP_PASSWORD || '',
     port: parseInt(process.env.SMTP_PORT || '587'),
   },
+  redis: {
+    host: process.env.REDIS_HOST || 'admin',
+    port: parseInt(process.env.REDIS_PORT) || 6379,
+    pass: process.env.REDIS_PASS || 'admin',
+  },
   aws: {
     region: process.env.AWS_REGION || '',
     s3: {
@@ -45,11 +50,6 @@ export const aiCvResumerENVConfig = {
   jwt: {
     jwtSecret: process.env.JWT_SECRET || '',
     jwtExpire: process.env.JWT_EXPIRE || '',
-  },
-  redis: {
-    host: process.env.REDIS_HOST || 'admin',
-    port: parseInt(process.env.REDIS_PORT) || 6379,
-    pass: process.env.REDIS_PASS || 'admin',
   },
   cookie: {
     domain: process.env.COOKIE_DOMAIN || 'localhost',

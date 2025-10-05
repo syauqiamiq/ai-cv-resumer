@@ -28,15 +28,6 @@
         "tsConfigPath": "libs/chroma/tsconfig.lib.json"
       }
     },
-    "cv-worker": {
-      "type": "application",
-      "root": "apps/cv-worker",
-      "entryFile": "main",
-      "sourceRoot": "apps/cv-worker/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/cv-worker/tsconfig.app.json"
-      }
-    },
     "gemini": {
       "type": "library",
       "root": "libs/gemini",
@@ -64,15 +55,6 @@
         "tsConfigPath": "libs/pdf/tsconfig.lib.json"
       }
     },
-    "project-worker": {
-      "type": "application",
-      "root": "apps/project-worker",
-      "entryFile": "main",
-      "sourceRoot": "apps/project-worker/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/project-worker/tsconfig.app.json"
-      }
-    },
     "s3": {
       "type": "library",
       "root": "libs/s3",
@@ -80,6 +62,15 @@
       "sourceRoot": "libs/s3/src",
       "compilerOptions": {
         "tsConfigPath": "libs/s3/tsconfig.lib.json"
+      }
+    },
+    "worker": {
+      "type": "application",
+      "root": "apps/worker",
+      "entryFile": "main",
+      "sourceRoot": "apps/worker/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/worker/tsconfig.app.json"
       }
     }
   }

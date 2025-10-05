@@ -10,7 +10,8 @@ export class ChromaService {
 
   constructor() {
     this.client = new ChromaClient({
-      path: libraryENVConfig.chroma.host,
+      host: libraryENVConfig.chroma.host,
+      port: libraryENVConfig.chroma.port,
     });
   }
 

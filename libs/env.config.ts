@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv';
 import e from 'express';
+import { parse } from 'path';
 dotenv.config({ path: 'libs/.env' });
 
 export const libraryENVConfig = {
@@ -15,5 +16,6 @@ export const libraryENVConfig = {
   },
   chroma: {
     host: process.env.CHROMA_HOST || 'localhost',
+    port: parseInt(process.env.CHROMA_PORT) || 21131,
   },
 };
