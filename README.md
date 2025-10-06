@@ -45,6 +45,13 @@ API ini merupakan prototype fitur evaluasi talenta modern yang dikembangkan untu
 
 - https://ai-cv-resumer-api.okispace.my.id/api-documentation
 
+### 👨‍💻 Default Login Credentials for Live Preview
+
+```
+Email: developer@email.com
+Password: developer
+```
+
 ## 📋 Prerequisites
 
 ### System Requirements
