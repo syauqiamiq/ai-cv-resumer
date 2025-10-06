@@ -39,7 +39,7 @@ export class EvaluationJobController {
   @ApiOperation({
     summary: 'Create and execute evaluation job',
     description:
-      "Creates a new evaluation job to analyze CV and project report against job requirements using AI. The system will evaluate the candidate's qualifications, project experience, and provide comprehensive feedback.",
+      "Creates a new evaluation job to analyze CV and project report against job requirements using AI. The system will evaluate the candidate's cv, project report, and provide comprehensive feedback.",
   })
   @ApiBody({
     type: CreateEvaluationJobDto,

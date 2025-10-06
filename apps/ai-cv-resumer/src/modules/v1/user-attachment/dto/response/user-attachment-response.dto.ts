@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { EUserAttachmentType } from 'apps/ai-cv-resumer/src/common/enums/user-attachment-type.enum';
 import { IUserAttachment } from 'apps/ai-cv-resumer/src/databases/interfaces/user-attachment.interface';
 
 export class UserAttachmentResponseDto implements Partial<IUserAttachment> {
@@ -24,7 +25,7 @@ export class UserAttachmentResponseDto implements Partial<IUserAttachment> {
   @ApiProperty({
     description: 'Type of the attachment',
     example: 'CV',
-    enum: ['CV', 'PROJECT_REPORT', 'PORTFOLIO'],
+    enum: EUserAttachmentType,
   })
   type: string;
 

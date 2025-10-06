@@ -44,7 +44,7 @@ export class UserAttachmentController {
   @ApiOperation({
     summary: 'Upload user attachment',
     description:
-      'Upload a file attachment (CV, project report, or portfolio) for the authenticated user. Supports PDF, DOC, DOCX formats with a maximum size of 10MB.',
+      'Upload a file attachment (CV, project report, or portfolio) for the authenticated user. Supports PDF formats with a maximum size of 5MB.',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -78,7 +78,7 @@ export class UserAttachmentController {
   @ApiOperation({
     summary: 'Get all user attachments',
     description:
-      'Retrieve all file attachments uploaded by the authenticated user, including CVs, project reports, and portfolios.',
+      'Retrieve all file attachments uploaded by the authenticated user, including CVs, project reports.',
   })
   @ApiResponse({
     status: 200,
