@@ -1,6 +1,4 @@
 import * as dotenv from 'dotenv';
-import e from 'express';
-import { parse } from 'path';
 dotenv.config({ path: 'libs/.env' });
 
 export const libraryENVConfig = {

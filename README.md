@@ -1,98 +1,122 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🤖 AI CV Resumer
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend API yang terintegrasi dengan AI untuk mengotomatisasi proses screening resume dan penilaian proyek terhadap kecocokan dari Job Description.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 📋 Summary
 
-## Description
+API ini merupakan prototype fitur evaluasi talenta modern yang dikembangkan untuk perekrutan, mencakup:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **AI-Powered Analysis** - Analisis CV dan proyek menggunakan Google Gemini AI
+- **Vector Search** - Pencarian semantik menggunakan ChromaDB untuk matching kandidat
+- **Queue Processing** - Sistem antrian dengan Redis untuk processing background
+- **Job Fitment** - Analisis kecocokan CV dan Laporan Proyek terhadap job description
 
-## Project setup
+## 🛠 Tech Stack
 
-```bash
-$ yarn install
-```
+### Backend
 
-## Compile and run the project
+- **NestJS** - Node.js Framework
+- **TypeScript** - Programming Language
+- **PostgreSQL** - Database
+- **TypeORM** - ORM
 
-```bash
-# development
-$ yarn run start
+### AI & Processing
 
-# watch mode
-$ yarn run start:dev
+- **Google Gemini AI** - Text Generation & Embeddings
+- **ChromaDB** - Vector Database
+- **pdf-parse** - PDF Processing
 
-# production mode
-$ yarn run start:prod
-```
+### Storage & Infrastructure
 
-## Run tests
+- **MinIO S3** - Object Storage
+- **Redis + BullMQ** - Caching & Job Queue
+- **Docker** - Containerization
 
-```bash
-# unit tests
-$ yarn run test
+### Development Tools
 
-# e2e tests
-$ yarn run test:e2e
+- **Swagger/OpenAPI** - API Documentation
+- **Jest** - Testing Framework
+- **ESLint** - Code Linting
+- **Prettier** - Code Formatting
 
-# test coverage
-$ yarn run test:cov
-```
+## 📋 Live Preview
 
-## Deployment
+- **API Documentation**:
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- https://ai-cv-resumer-api.okispace.my.id/api-documentation
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## 📋 Prerequisites
+
+### System Requirements
+
+- **Node.js** >= 18.0
+- **Yarn** >= 1.22
+- **Docker** >= 20.0
+- **PostgreSQL** >= 12.0
+
+## 🚀 Cara Menjalankan
+
+### 1. Clone Repository
 
 ```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
+git clone https://github.com/syauqiamiq/ai-cv-resumer.git
+cd ai-cv-resumer
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 2. Install Dependencies
 
-## Resources
+```bash
+# Install all dependencies
+yarn install
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+### 3. Main Service Environment Setup
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+# Copy environment file pada directory /apps/ai-cv-resumer
+cp .env.example .env
 
-## Support
+# Edit .env dengan konfigurasi yang sesuai
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### 3. Worker Service Environment Setup
 
-## Stay in touch
+```bash
+# Copy environment file pada directory /apps/worker
+cp .env.example .env
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# Edit .env dengan konfigurasi yang sesuai
+```
 
-## License
+### 3. Shared Library Environment Setup
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```bash
+# Copy environment file pada directory /libs
+cp .env.example .env
+
+# Edit .env dengan konfigurasi yang sesuai
+```
+
+### 4. Run Development Server
+
+```bash
+# Start main application
+yarn start:dev ai-cv-resumer
+
+# Start worker services (in separate terminals)
+yarn start:dev worker
+```
+
+### 5. Access Application
+
+- **Main Application**: http://localhost:9898
+- **API Documentation**: http://localhost:9898/api-documentation
+- **CV Worker**: http://localhost:9797
+
+## System Architecture
+
+![System Architecture](/system-architecture.png)
+
+## Database Design
+
+![Services Design](/ERD.png)
