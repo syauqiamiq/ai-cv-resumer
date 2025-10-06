@@ -18,6 +18,7 @@ import { overallSummaryPrompt } from 'apps/worker/src/common/prompts/overall-sum
 import { EEvaluationJobStatus } from 'apps/worker/src/common/enums/evaluation-job-status.enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { cleanAIJsonResponse } from '@global/functions/json-ai-cleaner';
+import { retry } from '@global/functions/retry';
 
 @Processor('evaluation-queue')
 export class EvaluationJobConsumer extends WorkerHost {
@@ -123,15 +124,19 @@ export class EvaluationJobConsumer extends WorkerHost {
           contextResult.join('\n'),
         );
 
-        const response = await this.geminiService.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: cvEvaluationPrompt,
-          config: {
-            temperature: 0.1,
-            maxOutputTokens: 5000,
-          },
-        });
-
+        const response = await retry(
+          () =>
+            this.geminiService.generateContent({
+              model: 'gemini-2.5-flash',
+              contents: cvEvaluationPrompt,
+              config: {
+                temperature: 0.1,
+                maxOutputTokens: 5000,
+              },
+            }),
+          3,
+          1000,
+        );
         parsedCvResult = cleanAIJsonResponse(response.text);
 
         await this.evaluationJobRepository.update(evaluationJobData.id, {
@@ -149,14 +154,19 @@ export class EvaluationJobConsumer extends WorkerHost {
           contextResult.join('\n'),
         );
 
-        const projectReportResponse = await this.geminiService.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: projectReportEvaluationPrompt,
-          config: {
-            temperature: 0.1,
-            maxOutputTokens: 5000,
-          },
-        });
+        const projectReportResponse = await retry(
+          () =>
+            this.geminiService.generateContent({
+              model: 'gemini-2.5-flash',
+              contents: projectReportEvaluationPrompt,
+              config: {
+                temperature: 0.1,
+                maxOutputTokens: 5000,
+              },
+            }),
+          3,
+          1000,
+        );
 
         await this.evaluationJobRepository.update(evaluationJobData.id, {
           status: EEvaluationJobStatus.PROCESSING,
@@ -184,14 +194,19 @@ export class EvaluationJobConsumer extends WorkerHost {
         contextResult.join('\n'),
       );
 
-      const overallSummaryResponse = await this.geminiService.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: overallPrompt,
-        config: {
-          temperature: 0.1,
-          maxOutputTokens: 5000,
-        },
-      });
+      const overallSummaryResponse = await retry(
+        () =>
+          this.geminiService.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: overallPrompt,
+            config: {
+              temperature: 0.1,
+              maxOutputTokens: 5000,
+            },
+          }),
+        3,
+        1000,
+      );
 
       const parsedOverallSummaryResult = cleanAIJsonResponse(
         overallSummaryResponse.text,
