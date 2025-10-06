@@ -11,6 +11,18 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiConsumes,
+  ApiBody,
+  ApiUnauthorizedResponse,
+  ApiBadRequestResponse,
+  ApiInternalServerErrorResponse,
+} from '@nestjs/swagger';
 import { UserAttachmentService } from './user-attachment.service';
 
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -20,6 +32,7 @@ import { UserAttachmentResponseDto } from './dto/response/user-attachment-respon
 import { JwtGuard } from 'apps/ai-cv-resumer/src/common/guard/jwt.guard';
 import { IEnhanceRequest } from 'apps/ai-cv-resumer/src/common/interfaces/request.interface';
 
+@ApiTags('User Attachments')
 @Controller('user-attachment')
 export class UserAttachmentController {
   constructor(private readonly userAttachmentService: UserAttachmentService) {}
@@ -27,6 +40,22 @@ export class UserAttachmentController {
   @Post()
   @UseGuards(JwtGuard)
   @UseInterceptors(FileInterceptor('file'))
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Upload user attachment',
+    description:
+      'Upload a file attachment (CV, project report, or portfolio) for the authenticated user. Supports PDF, DOC, DOCX formats with a maximum size of 10MB.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'File upload with attachment type',
+    type: CreateUserAttachmentDto,
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'File uploaded successfully',
+    type: UserAttachmentResponseDto,
+  })
   async upload(
     @Req() request: IEnhanceRequest,
     @Body() createUserAttachmentDto: CreateUserAttachmentDto,
@@ -45,6 +74,17 @@ export class UserAttachmentController {
 
   @Get()
   @UseGuards(JwtGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get all user attachments',
+    description:
+      'Retrieve all file attachments uploaded by the authenticated user, including CVs, project reports, and portfolios.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User attachments retrieved successfully',
+    type: [UserAttachmentResponseDto],
+  })
   async getAll(
     @Req() request: IEnhanceRequest,
   ): Promise<IApiResponse<UserAttachmentResponseDto[]>> {
