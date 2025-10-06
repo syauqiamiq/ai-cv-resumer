@@ -1,5 +1,6 @@
 import { IBaseEntityWithSoftDelete } from '@global/databases/interfaces/base.interface';
 import { IUserAttachment } from './user-attachment.interface';
+import { IUser } from './user.interface';
 
 export interface IEvaluationJob extends IBaseEntityWithSoftDelete {
   status: string | null;
@@ -14,4 +15,5 @@ export interface IEvaluationJob extends IBaseEntityWithSoftDelete {
   cvAttachment?: IUserAttachment | null;
   projectAttachment?: IUserAttachment | null;
   evaluatedAt?: string | null;
+  user?: IUser | null;
 }

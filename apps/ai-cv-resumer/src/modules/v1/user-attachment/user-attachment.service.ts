@@ -26,6 +26,7 @@ export class UserAttachmentService {
   async upload(
     createUserAttachmentDto: CreateUserAttachmentDto,
     file: Express.Multer.File,
+    userId: string,
   ) {
     let uploadedS3Path: string | null = null;
 
@@ -48,7 +49,7 @@ export class UserAttachmentService {
       const uniqueFileName = generateUniqueFileName(file);
 
       // Generate S3 path
-      const s3Path = getUserAttachmentS3Directory(uniqueFileName);
+      const s3Path = getUserAttachmentS3Directory(userId, uniqueFileName);
       uploadedS3Path = s3Path;
 
       // Upload to S3 (MinIO)
@@ -68,6 +69,7 @@ export class UserAttachmentService {
           type: createUserAttachmentDto.type,
           mimeType: file.mimetype,
           size: file.size,
+          userId: userId,
         });
 
       await queryRunner.commitTransaction();
@@ -93,8 +95,9 @@ export class UserAttachmentService {
     }
   }
 
-  async getAll() {
+  async getAll(userId: string) {
     return await this.userAttachmentRepository.find({
+      where: { userId: userId },
       order: { createdAt: 'DESC' },
     });
   }

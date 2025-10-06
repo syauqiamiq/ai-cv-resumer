@@ -18,6 +18,8 @@ import { GeminiModule } from '@app/gemini';
 import { PdfModule } from '@app/pdf';
 import { ChromaModule } from '@app/chroma';
 
+import { AuthModule } from './modules/v1/auth/auth.module';
+
 @Module({
   imports: [
     TypeOrmModule.forRoot(databaseConfig),
@@ -54,6 +56,7 @@ import { ChromaModule } from '@app/chroma';
     ChromaModule,
     UserAttachmentModule,
     EvaluationJobModule,
+    AuthModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

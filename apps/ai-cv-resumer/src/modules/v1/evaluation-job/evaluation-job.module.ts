@@ -6,10 +6,11 @@ import { EvaluationJobController } from './evaluation-job.controller';
 import { EvaluationJobService } from './evaluation-job.service';
 import { BullModule } from '@nestjs/bullmq';
 import { aiCvResumerENVConfig } from 'apps/ai-cv-resumer/src/env.config';
+import { UserAttachment } from 'apps/ai-cv-resumer/src/databases/entities/user-attachment.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([EvaluationJob]),
+    TypeOrmModule.forFeature([EvaluationJob, UserAttachment]),
     BullModule.registerQueue({
       name: 'evaluation-queue',
       connection: {

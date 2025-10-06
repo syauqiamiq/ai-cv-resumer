@@ -52,6 +52,12 @@ export class EvaluationJobConsumer extends WorkerHost {
       throw new Error(`Evaluation job with ID ${payload.id} not found`);
     }
 
+    if (evaluationJobData.status !== EEvaluationJobStatus.QUEUED) {
+      throw new Error(
+        `Evaluation job with ID ${payload.id} is not in QUEUED status`,
+      );
+    }
+
     await this.evaluationJobRepository.update(evaluationJobData.id, {
       status: EEvaluationJobStatus.PROCESSING,
       evaluatedAt: new Date().toISOString(),
@@ -167,51 +173,51 @@ export class EvaluationJobConsumer extends WorkerHost {
 
       // 7. Use Gemini to evaluate Overall Summary against Job Description and generate feedback
 
-      if (!evaluationJobData.finalResult) {
-        const overallPrompt = overallSummaryPrompt(
-          JSON.stringify(parsedCvResult),
-          JSON.stringify(parsedProjectReportResult),
-          payload.jobTitle,
-          contextResult.join('\n'),
-        );
+      const overallPrompt = overallSummaryPrompt(
+        parsedCvResult
+          ? JSON.stringify(parsedCvResult)
+          : JSON.stringify(evaluationJobData.cvResult),
+        parsedProjectReportResult
+          ? JSON.stringify(parsedProjectReportResult)
+          : JSON.stringify(evaluationJobData.projectResult),
+        payload.jobTitle,
+        contextResult.join('\n'),
+      );
 
-        const overallSummaryResponse = await this.geminiService.generateContent(
-          {
-            model: 'gemini-2.5-flash',
-            contents: overallPrompt,
-            config: {
-              temperature: 0.1,
-              maxOutputTokens: 5000,
-            },
-          },
-        );
+      const overallSummaryResponse = await this.geminiService.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: overallPrompt,
+        config: {
+          temperature: 0.1,
+          maxOutputTokens: 5000,
+        },
+      });
 
-        const parsedOverallSummaryResult = cleanAIJsonResponse(
-          overallSummaryResponse.text,
-        );
+      const parsedOverallSummaryResult = cleanAIJsonResponse(
+        overallSummaryResponse.text,
+      );
 
-        const finalResult: any = {
-          cv_match_rate: parsedCvResult
-            ? parseFloat(parsedCvResult.cv_score) * 0.2
-            : parseFloat(evaluationJobData.cvResult?.cv_score) * 0.2,
-          cv_feedback: parsedCvResult
-            ? parsedCvResult.feedback
-            : evaluationJobData.cvResult?.feedback,
-          project_score: parsedProjectReportResult
-            ? parsedProjectReportResult.project_report_score
-            : evaluationJobData.projectResult?.project_report_score,
-          project_feedback: parsedProjectReportResult
-            ? parsedProjectReportResult.feedback
-            : evaluationJobData.projectResult?.feedback,
-          overall_summary:
-            parsedOverallSummaryResult.overall_summary ||
-            evaluationJobData.finalResult?.overall_summary,
-        };
+      const finalResult: any = {
+        cv_match_rate: parsedCvResult
+          ? parseFloat(parsedCvResult.cv_score) * 0.2
+          : parseFloat(evaluationJobData.cvResult?.cv_score) * 0.2,
+        cv_feedback: parsedCvResult
+          ? parsedCvResult.feedback
+          : evaluationJobData.cvResult?.feedback,
+        project_score: parsedProjectReportResult
+          ? parsedProjectReportResult.project_report_score
+          : evaluationJobData.projectResult?.project_report_score,
+        project_feedback: parsedProjectReportResult
+          ? parsedProjectReportResult.feedback
+          : evaluationJobData.projectResult?.feedback,
+        overall_summary:
+          parsedOverallSummaryResult.overall_summary ||
+          evaluationJobData.finalResult?.overall_summary,
+      };
 
-        await this.evaluationJobRepository.update(evaluationJobData.id, {
-          finalResult: finalResult,
-        });
-      }
+      await this.evaluationJobRepository.update(evaluationJobData.id, {
+        finalResult: finalResult,
+      });
       await this.evaluationJobRepository.update(evaluationJobData.id, {
         status: EEvaluationJobStatus.COMPLETED,
       });

@@ -15,6 +15,8 @@ import { Readable } from 'node:stream';
 import { PdfService } from '@app/pdf';
 import { ChromaService } from '@app/chroma';
 import { GeminiService } from '@app/gemini';
+import { UserAttachment } from 'apps/ai-cv-resumer/src/databases/entities/user-attachment.entity';
+import { EUserAttachmentType } from 'apps/ai-cv-resumer/src/common/enums/user-attachment-type.enum';
 
 @Injectable()
 export class EvaluationJobService {
@@ -22,19 +24,55 @@ export class EvaluationJobService {
     @InjectQueue('evaluation-queue') private evaluationQueue: Queue,
     @InjectRepository(EvaluationJob)
     private readonly evaluationJobRepository: Repository<EvaluationJob>,
+    @InjectRepository(UserAttachment)
+    private readonly userAttachmentRepository: Repository<UserAttachment>,
     private readonly s3Service: S3Service,
     private readonly pdfService: PdfService,
     private readonly chromaService: ChromaService,
     private readonly geminiService: GeminiService,
   ) {}
 
-  async executeEvaluationJob(createEvaluationJobDto: CreateEvaluationJobDto) {
+  async executeEvaluationJob(
+    createEvaluationJobDto: CreateEvaluationJobDto,
+    userId: string,
+  ) {
+    const cvAttachment = await this.userAttachmentRepository.findOne({
+      where: {
+        id: createEvaluationJobDto.cvAttachmentId,
+        userId: userId,
+        type: EUserAttachmentType.CV,
+      },
+    });
+
+    if (!cvAttachment) {
+      throw new BadRequestException('CV Attachment not found');
+    }
+
+    const projectAttachment = await this.userAttachmentRepository.findOne({
+      where: {
+        id: createEvaluationJobDto.projectAttachmentId,
+        userId: userId,
+        type: EUserAttachmentType.PROJECT_REPORT,
+      },
+    });
+
+    if (!projectAttachment) {
+      throw new BadRequestException('Project Attachment not found');
+    }
+
+    if (cvAttachment.id === projectAttachment.id) {
+      throw new BadRequestException(
+        'CV Attachment and Project Attachment cannot be the same',
+      );
+    }
+
     // Save evaluation job to database (not implemented in this snippet)
     const savedJob = await this.evaluationJobRepository.save({
       cvAttachmentId: createEvaluationJobDto.cvAttachmentId,
       projectAttachmentId: createEvaluationJobDto.projectAttachmentId,
       jobTitle: createEvaluationJobDto.jobTitle,
       status: EEvaluationJobStatus.QUEUED,
+      userId: userId,
     });
 
     const jobParam = {
@@ -46,7 +84,6 @@ export class EvaluationJobService {
     };
     // Emit event to Kafka topic
     await this.evaluationQueue.add('evaluation-job', jobParam, {
-      jobId: savedJob.id,
       attempts: 3,
       backoff: { type: 'exponential', delay: 5000 },
       removeOnComplete: {
@@ -62,12 +99,76 @@ export class EvaluationJobService {
     };
   }
 
-  async resultByJobId(jobId: string) {
+  async retryEvaluationJobById(jobId: string, userId: string) {
+    // Save evaluation job to database (not implemented in this snippet)
+    const foundJob = await this.evaluationJobRepository.findOne({
+      where: {
+        id: jobId,
+        userId: userId,
+      },
+    });
+
+    if (!foundJob) {
+      throw new BadRequestException('Job not found');
+    }
+
+    if (
+      foundJob.status === EEvaluationJobStatus.QUEUED ||
+      foundJob.status === EEvaluationJobStatus.PROCESSING
+    ) {
+      throw new BadRequestException(
+        'Job is cannot be retried while in progress',
+      );
+    }
+
+    if (foundJob.retryCount >= 3) {
+      throw new BadRequestException('Job has reached maximum retry attempts');
+    }
+    await this.evaluationJobRepository.update(
+      {
+        id: jobId,
+        userId: userId,
+      },
+      {
+        status: EEvaluationJobStatus.QUEUED,
+        retryCount: foundJob.retryCount + 1,
+      },
+    );
+    const jobParam = {
+      id: foundJob.id,
+      cvAttachmentId: foundJob.cvAttachmentId,
+      projectAttachmentId: foundJob.projectAttachmentId,
+      jobTitle: foundJob.jobTitle,
+      createdAt: foundJob.createdAt,
+    };
+    // Emit event to Kafka topic
+    await this.evaluationQueue.add('evaluation-job', jobParam, {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 5000 },
+      removeOnComplete: {
+        age: 3600,
+        count: 1000,
+      },
+    });
+
+    return {
+      jobId: foundJob.id,
+      status: foundJob.status,
+      result: null,
+    };
+  }
+
+  async resultByJobId(jobId: string, userId: string) {
     const job = await this.evaluationJobRepository.findOne({
       where: {
         id: jobId,
+        userId: userId,
       },
     });
+
+    if (!job) {
+      throw new BadRequestException('Job not found');
+    }
     return {
       jobId: job.id,
       status: job.status,

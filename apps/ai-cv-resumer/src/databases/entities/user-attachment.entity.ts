@@ -1,15 +1,24 @@
 import { BaseEntityWithSoftDelete } from '@global/databases/entities/base.entity';
-import { Column, Entity, JoinColumn, OneToMany } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
 import { IEvaluationJob } from '../interfaces/evaluation-job.interface';
 import { EvaluationJob } from './evaluation-job.entity';
 import { IUserAttachment } from '../interfaces/user-attachment.interface';
+import { User } from './user.entity';
+import { IUser } from '../interfaces/user.interface';
 
 @Entity('user_attachments')
 export class UserAttachment
   extends BaseEntityWithSoftDelete
   implements IUserAttachment
 {
+  @Column({
+    name: 'user_id',
+    type: 'uuid',
+    nullable: true,
+  })
+  userId?: string | null;
+
   @Column({
     name: 'document_name',
     type: 'varchar',
@@ -56,4 +65,8 @@ export class UserAttachment
   )
   @JoinColumn({ name: 'project_attachment_id' })
   projectEvaluationJob?: IEvaluationJob;
+
+  @ManyToOne(() => User, (user) => user.userAttachments)
+  @JoinColumn({ name: 'user_id' })
+  user?: IUser | null;
 }
