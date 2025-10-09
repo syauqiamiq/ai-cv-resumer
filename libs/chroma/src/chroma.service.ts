@@ -1,12 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ChromaClient, IncludeEnum, Metadata } from 'chromadb';
+import { ChromaClient, Metadata, Where, WhereDocument } from 'chromadb';
 import { libraryENVConfig } from 'libs/env.config';
-
+type Include = 'distances' | 'documents' | 'embeddings' | 'metadatas' | 'uris';
 @Injectable()
 export class ChromaService {
   private readonly logger = new Logger(ChromaService.name);
   private readonly client: ChromaClient;
-  private readonly collectionName = 'reference_docs';
 
   constructor() {
     this.client = new ChromaClient({
@@ -16,17 +15,18 @@ export class ChromaService {
   }
 
   /** Pastikan collection tersedia */
-  private async getCollection() {
+  private async getCollection(collectionName: string) {
     try {
-      return await this.client.getCollection({ name: this.collectionName });
+      return await this.client.getCollection({ name: collectionName });
     } catch {
-      this.logger.log(`Creating Chroma collection: ${this.collectionName}`);
-      return await this.client.createCollection({ name: this.collectionName });
+      this.logger.log(`Creating Chroma collection: ${collectionName}`);
+      return await this.client.createCollection({ name: collectionName });
     }
   }
 
   /** Ingest dokumen referensi (misal Job Desc, Rubric, Case Brief) */
   async addDocuments(args: {
+    collection: string;
     ids: string[];
     embeddings?: number[][];
     metadatas?: Metadata[];
@@ -34,7 +34,7 @@ export class ChromaService {
     uris?: string[];
   }) {
     try {
-      const collection = await this.getCollection();
+      const collection = await this.getCollection(args.collection);
       await collection.add(args);
       this.logger.log(`✅ Added ${args.documents?.length} docs to Chroma`);
     } catch (error) {
@@ -43,15 +43,39 @@ export class ChromaService {
     }
   }
 
-  /** Query dokumen relevan berdasarkan embedding */
-  async query(embedding: number[], topK = 5): Promise<string[]> {
+  async upsert(args: {
+    collection?: string;
+    ids: string[];
+    embeddings?: number[][];
+    metadatas?: Metadata[];
+    documents?: string[];
+    uris?: string[];
+  }) {
     try {
-      const collection = await this.getCollection();
-      const results = await collection.query({
-        queryEmbeddings: [embedding],
-        nResults: topK,
-        include: [IncludeEnum.documents, IncludeEnum.metadatas],
-      });
+      const collection = await this.getCollection(args.collection);
+      await collection.upsert(args);
+      this.logger.log(`✅ Upserted ${args.documents?.length} docs to Chroma`);
+    } catch (error) {
+      this.logger.error(`Failed to add docs to Chroma: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /** Query dokumen relevan berdasarkan embedding */
+  async query(args: {
+    collection: string;
+    queryEmbeddings?: number[][];
+    queryTexts?: string[];
+    queryURIs?: string[];
+    ids?: string[];
+    nResults?: number;
+    where?: Where;
+    whereDocument?: WhereDocument;
+    include?: Include[];
+  }): Promise<string[]> {
+    try {
+      const collection = await this.getCollection(args.collection);
+      const results = await collection.query(args);
 
       if (!results.documents?.length) return [];
 
@@ -67,10 +91,10 @@ export class ChromaService {
   }
 
   /** Optional: Hapus semua dokumen referensi */
-  async clearAll() {
+  async clearAll(collection: string) {
     try {
-      await this.client.deleteCollection({ name: this.collectionName });
-      this.logger.warn(`🗑️ Deleted collection: ${this.collectionName}`);
+      await this.client.deleteCollection({ name: collection });
+      this.logger.warn(`🗑️ Deleted collection: ${collection}`);
     } catch (error) {
       this.logger.error(`Failed to delete collection: ${error.message}`);
       throw error;
