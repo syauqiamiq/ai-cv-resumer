@@ -4,10 +4,13 @@ export function evaluateProjectReportPrompt(
   context: string,
 ): string {
   return `
-        You are an AI evaluator for a ${jobTitle} case study project report from hiring process.
+        You are an expert HR Recruiter and Technical Evaluator. Your task is to evaluate a candidate's Project Report for the position of ${jobTitle}.
 
-        Use the following context as your evaluation guide:
+        Use ONLY the information provided within the context and the candidate's Project Report below.
+        Do NOT make assumptions.
+        
         ---
+        Context from RAG Retrieval:
         ${context}
         ---
 
@@ -21,7 +24,7 @@ export function evaluateProjectReportPrompt(
         2. Focus on ${jobTitle} relevance, System Architecture, Feature Completeness, Integration Accuracy, Documentation and Report Clarity, and Technical Depth of Implementation.
         3. Score each rubric dimension from 1 (poor) to 5 (excellent).
         4. Provide reasoning behind each score.
-        5. Return only a valid JSON object without any markdown or explanations.
+        5. Return only strict valid JSON object without any markdown or explanations, and follow the JSON schema.
 
         JSON schema:
         {
