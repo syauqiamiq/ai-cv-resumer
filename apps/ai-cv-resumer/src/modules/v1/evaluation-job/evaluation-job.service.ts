@@ -261,7 +261,6 @@ export class EvaluationJobService {
         metadatas: [
           {
             type: 'cv-context',
-            jobTitle: 'Backend Engineer',
             source: 'initial-ingest',
           },
         ],
@@ -275,7 +274,6 @@ export class EvaluationJobService {
         metadatas: [
           {
             type: 'project-context',
-            jobTitle: 'Backend Engineer',
             source: 'initial-ingest',
           },
         ],
