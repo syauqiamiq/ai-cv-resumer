@@ -1,3 +1,5 @@
+import { BadRequestException } from '@nestjs/common';
+
 /**
  * Simple retry function for external service calls
  *
@@ -17,13 +19,13 @@ export async function retry<T>(
   maxRetries: number = 3,
   delay: number = 1000,
 ): Promise<T> {
-  let lastError: Error;
+  let lastError: string = 'Unknown error';
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await fn();
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
+      lastError = error instanceof Error ? error.message : String(error);
 
       if (attempt === maxRetries) {
         break;
@@ -33,5 +35,5 @@ export async function retry<T>(
     }
   }
 
-  throw lastError;
+  throw new BadRequestException(`${lastError}`);
 }
