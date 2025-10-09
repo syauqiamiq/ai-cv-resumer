@@ -1,24 +1,24 @@
-import { Inject, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 
 import { ChromaService } from '@app/chroma';
 import { GeminiService } from '@app/gemini';
 import { PdfService } from '@app/pdf';
 import { S3Service } from '@app/s3';
+import { cleanAIJsonResponse } from '@global/functions/json-ai-cleaner';
+import { retry } from '@global/functions/retry';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Job } from 'bullmq';
-import { DataSource, Repository } from 'typeorm';
-import { EvaluationJobPayloadDto } from './dto/request/evaluation-job-payload.dto';
-import { EvaluationJob } from 'apps/worker/src/databases/entities/evaluation-job.entity';
-import { workerENVConfig } from 'apps/worker/src/env.config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { EEvaluationJobStatus } from 'apps/worker/src/common/enums/evaluation-job-status.enum';
 import { streamToBuffer } from 'apps/worker/src/common/functions/stream-to-buffer';
-import { Readable } from 'stream';
 import { evaluateCvPrompt } from 'apps/worker/src/common/prompts/evaluate-cv.prompt';
 import { evaluateProjectReportPrompt } from 'apps/worker/src/common/prompts/evaluate-project-report.prompt';
 import { overallSummaryPrompt } from 'apps/worker/src/common/prompts/overall-summary.prompt';
-import { EEvaluationJobStatus } from 'apps/worker/src/common/enums/evaluation-job-status.enum';
-import { InjectRepository } from '@nestjs/typeorm';
-import { cleanAIJsonResponse } from '@global/functions/json-ai-cleaner';
-import { retry } from '@global/functions/retry';
+import { EvaluationJob } from 'apps/worker/src/databases/entities/evaluation-job.entity';
+import { workerENVConfig } from 'apps/worker/src/env.config';
+import { Job } from 'bullmq';
+import { Readable } from 'stream';
+import { DataSource, Repository } from 'typeorm';
+import { EvaluationJobPayloadDto } from './dto/request/evaluation-job-payload.dto';
 
 @Processor('evaluation-queue')
 export class EvaluationJobConsumer extends WorkerHost {
@@ -89,39 +89,46 @@ export class EvaluationJobConsumer extends WorkerHost {
       const projectReportText =
         await this.pdfService.extractText(projectReportBuffer);
 
-      // 3. Generate embeddings for CV and Job Description
-      let contextResult: string[] = [];
-      if (
-        !evaluationJobData.cvResult &&
-        !evaluationJobData.projectResult &&
-        !evaluationJobData.finalResult
-      ) {
-        const embeddedContent = await this.geminiService.embedContent({
+      // 5. Use Gemini to evaluate CV against Job Description and generate feedback
+      let parsedCvResult: any = null;
+      if (!evaluationJobData.cvResult) {
+        const combinedCvContextText = `Job Title: ${payload.jobTitle}\n\nCV Text:\n${cvText} `;
+
+        const cvEmbeddedContent = await this.geminiService.embedContent({
           model: 'gemini-embedding-001',
-          contents: [
-            `Evaluation criteria include job description and cv scoring rubric, project evaluation scoring rubric for ${payload.jobTitle} CV Candidate and Project Report Submission.`,
-          ],
+          contents: [combinedCvContextText],
         });
 
         // 4. Query relevant documents from Chroma based on CV embedding
 
-        if (!embeddedContent.embeddings[0]) {
-          throw new Error('Failed to generate embeddings');
+        if (!cvEmbeddedContent.embeddings[0]) {
+          throw new Error('Failed to generate cv embeddings');
         }
 
-        contextResult = await this.chromaService.query(
-          embeddedContent.embeddings[0].values,
-          5,
-        );
-      }
+        const cvContextResult = await this.chromaService.query({
+          collection: 'cv-vector',
+          queryEmbeddings: [cvEmbeddedContent.embeddings[0].values],
+          nResults: 5,
+          where: {
+            $and: [
+              {
+                type: {
+                  $eq: 'cv-context',
+                },
+              },
+              {
+                source: {
+                  $eq: 'initial-ingest',
+                },
+              },
+            ],
+          },
+        });
 
-      // 5. Use Gemini to evaluate CV against Job Description and generate feedback
-      let parsedCvResult: any = null;
-      if (!evaluationJobData.cvResult) {
         const cvEvaluationPrompt = evaluateCvPrompt(
           cvText,
           payload.jobTitle,
-          contextResult.join('\n'),
+          cvContextResult.join('\n'),
         );
 
         const response = await retry(
@@ -131,7 +138,6 @@ export class EvaluationJobConsumer extends WorkerHost {
               contents: cvEvaluationPrompt,
               config: {
                 temperature: 0.1,
-                maxOutputTokens: 5000,
               },
             }),
           3,
@@ -148,10 +154,43 @@ export class EvaluationJobConsumer extends WorkerHost {
 
       let parsedProjectReportResult: any = null;
       if (!evaluationJobData.projectResult) {
+        const combinedProjectContextText = `Project Report Text:\n${projectReportText} `;
+
+        const projectReportEmbeddedContent =
+          await this.geminiService.embedContent({
+            model: 'gemini-embedding-001',
+            contents: [combinedProjectContextText],
+          });
+
+        // 4. Query relevant documents from Chroma based on CV embedding
+
+        if (!projectReportEmbeddedContent.embeddings[0]) {
+          throw new Error('Failed to generate project report embeddings');
+        }
+
+        const projectReportContextResult = await this.chromaService.query({
+          collection: 'project-vector',
+          queryEmbeddings: [projectReportEmbeddedContent.embeddings[0].values],
+          nResults: 5,
+          where: {
+            $and: [
+              {
+                type: {
+                  $eq: 'project-context',
+                },
+              },
+              {
+                source: {
+                  $eq: 'initial-ingest',
+                },
+              },
+            ],
+          },
+        });
         const projectReportEvaluationPrompt = evaluateProjectReportPrompt(
           projectReportText,
           payload.jobTitle,
-          contextResult.join('\n'),
+          projectReportContextResult.join('\n'),
         );
 
         const projectReportResponse = await retry(
@@ -161,7 +200,6 @@ export class EvaluationJobConsumer extends WorkerHost {
               contents: projectReportEvaluationPrompt,
               config: {
                 temperature: 0.1,
-                maxOutputTokens: 5000,
               },
             }),
           3,
@@ -183,6 +221,37 @@ export class EvaluationJobConsumer extends WorkerHost {
 
       // 7. Use Gemini to evaluate Overall Summary against Job Description and generate feedback
 
+      const jobDescriptionEmbeddedContent =
+        await this.geminiService.embedContent({
+          model: 'gemini-embedding-001',
+          contents: [`Job Description for ${payload.jobTitle}`],
+        });
+
+      // 4. Query relevant documents from Chroma based on CV embedding
+
+      if (!jobDescriptionEmbeddedContent.embeddings[0]) {
+        throw new Error('Failed to generate job description embeddings');
+      }
+
+      const jobDescriptionContextResult = await this.chromaService.query({
+        collection: 'cv-vector',
+        queryEmbeddings: [jobDescriptionEmbeddedContent.embeddings[0].values],
+        nResults: 5,
+        where: {
+          $and: [
+            {
+              type: {
+                $eq: 'cv-context',
+              },
+            },
+            {
+              source: {
+                $eq: 'initial-ingest',
+              },
+            },
+          ],
+        },
+      });
       const overallPrompt = overallSummaryPrompt(
         parsedCvResult
           ? JSON.stringify(parsedCvResult)
@@ -191,7 +260,7 @@ export class EvaluationJobConsumer extends WorkerHost {
           ? JSON.stringify(parsedProjectReportResult)
           : JSON.stringify(evaluationJobData.projectResult),
         payload.jobTitle,
-        contextResult.join('\n'),
+        jobDescriptionContextResult.join('\n'),
       );
 
       const overallSummaryResponse = await retry(
@@ -201,7 +270,6 @@ export class EvaluationJobConsumer extends WorkerHost {
             contents: overallPrompt,
             config: {
               temperature: 0.1,
-              maxOutputTokens: 5000,
             },
           }),
         3,
