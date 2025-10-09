@@ -1,6 +1,7 @@
 import {
   EmbedContentParameters,
   EmbedContentResponse,
+  FinishReason,
   GenerateContentParameters,
   GenerateContentResponse,
   GoogleGenAI,
@@ -30,10 +31,11 @@ export class GeminiService {
   ): Promise<EmbedContentResponse> {
     try {
       const response = await this.genAI.models.embedContent(param);
+
       return response;
     } catch (error) {
       this.logger.error('Gemini Error: ', error);
-      throw error;
+      throw new Error(error.message);
     }
   }
 
@@ -45,7 +47,7 @@ export class GeminiService {
       return response;
     } catch (error) {
       this.logger.error('Gemini Error: ', error);
-      throw error;
+      throw new Error(error.message);
     }
   }
 }
