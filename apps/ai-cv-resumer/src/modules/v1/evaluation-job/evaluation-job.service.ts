@@ -227,85 +227,59 @@ export class EvaluationJobService {
         scoringRubricProjectBuffer,
       );
 
+      const combinedCvContextText = `${jobDescriptionText}\n\nRubric:\n${scoringRubricCVText}`;
+      const combinedProjectContextText = `${caseStudyText}\n\nRubric:\n${scoringRubricProjectText}`;
+
       // 3. Generate embeddings for CV and Job Description
 
-      const [
-        caseStudyEmbeddingResponse,
-        jobDescriptionEmbeddingResponse,
-        scoringRubricCVEmbeddingResponse,
-        scoringRubricProjectEmbeddingResponse,
-      ] = await Promise.all([
-        await this.geminiService.embedContent({
-          model: 'gemini-embedding-001',
-          contents: [caseStudyText],
-        }),
-        await this.geminiService.embedContent({
-          model: 'gemini-embedding-001',
-          contents: [jobDescriptionText],
-        }),
-
-        await this.geminiService.embedContent({
-          model: 'gemini-embedding-001',
-          contents: [scoringRubricCVText],
-        }),
-
-        await this.geminiService.embedContent({
-          model: 'gemini-embedding-001',
-          contents: [scoringRubricProjectText],
-        }),
-      ]);
+      const [cvContextEmbeddingResponse, projectContextEmbeddingResponse] =
+        await Promise.all([
+          await this.geminiService.embedContent({
+            model: 'gemini-embedding-001',
+            contents: [combinedCvContextText],
+          }),
+          await this.geminiService.embedContent({
+            model: 'gemini-embedding-001',
+            contents: [combinedProjectContextText],
+          }),
+        ]);
 
       // 4. Query relevant documents from Chroma based on CV embedding
 
-      const caseStudyEmbedding = caseStudyEmbeddingResponse.embeddings[0];
-      const jobDescriptionEmbedding =
-        jobDescriptionEmbeddingResponse.embeddings[0];
-      const scoringRubricCVEmbedding =
-        scoringRubricCVEmbeddingResponse.embeddings[0];
-      const scoringRubricProjectEmbedding =
-        scoringRubricProjectEmbeddingResponse.embeddings[0];
+      const cvContextVector = cvContextEmbeddingResponse.embeddings[0];
+      const projectContextVector =
+        projectContextEmbeddingResponse.embeddings[0];
 
-      if (
-        !caseStudyEmbedding ||
-        !jobDescriptionEmbedding ||
-        !scoringRubricCVEmbedding ||
-        !scoringRubricProjectEmbedding
-      ) {
+      if (!cvContextVector || !projectContextVector) {
         throw new Error('Failed to generate embeddings');
       }
 
-      const ids = [
-        'case-study',
-        'job-description',
-        'scoring-rubric-cv',
-        'scoring-rubric-project',
-      ];
-      const embeddings = [
-        caseStudyEmbedding.values,
-        jobDescriptionEmbedding.values,
-        scoringRubricCVEmbedding.values,
-        scoringRubricProjectEmbedding.values,
-      ];
+      await this.chromaService.upsert({
+        collection: 'cv-vector',
+        ids: ['cv-context'],
+        embeddings: [cvContextVector.values],
+        metadatas: [
+          {
+            type: 'cv-context',
+            jobTitle: 'Backend Engineer',
+            source: 'initial-ingest',
+          },
+        ],
+        documents: [combinedCvContextText],
+      });
 
-      const documents = [
-        caseStudyText,
-        jobDescriptionText,
-        scoringRubricCVText,
-        scoringRubricProjectText,
-      ];
-
-      const metadatas = [
-        { type: 'case-study' },
-        { type: 'job-description' },
-        { type: 'scoring-rubric-cv' },
-        { type: 'scoring-rubric-project' },
-      ];
-
-      await this.chromaService.addDocuments({
-        ids,
-        embeddings,
-        metadatas,
-        documents,
+      await this.chromaService.upsert({
+        collection: 'project-vector',
+        ids: ['project-context'],
+        embeddings: [projectContextVector.values],
+        metadatas: [
+          {
+            type: 'project-context',
+            jobTitle: 'Backend Engineer',
+            source: 'initial-ingest',
+          },
+        ],
+        documents: [combinedProjectContextText],
       });
     } catch (error) {
       console.error('Error triggering RAG:', error);
