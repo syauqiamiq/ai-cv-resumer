@@ -49,11 +49,4 @@ export class UserAttachment
   @OneToMany(() => EvaluationJob, (evaluationJob) => evaluationJob.cvAttachment)
   @JoinColumn({ name: 'cv_attachment_id' })
   cvEvaluationJob?: IEvaluationJob;
-
-  @OneToMany(
-    () => EvaluationJob,
-    (evaluationJob) => evaluationJob.projectAttachment,
-  )
-  @JoinColumn({ name: 'project_attachment_id' })
-  projectEvaluationJob?: IEvaluationJob;
 }

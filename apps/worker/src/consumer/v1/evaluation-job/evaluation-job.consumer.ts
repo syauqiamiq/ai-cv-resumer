@@ -44,7 +44,6 @@ export class EvaluationJobConsumer extends WorkerHost {
       relationLoadStrategy: 'join',
       relations: {
         cvAttachment: true,
-        projectAttachment: true,
       },
     });
 

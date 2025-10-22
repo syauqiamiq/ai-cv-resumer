@@ -8,5 +8,4 @@ export interface IUserAttachment extends IBaseEntityWithSoftDelete {
   mimeType?: string;
   size?: number;
   cvEvaluationJob?: IEvaluationJob;
-  projectEvaluationJob?: IEvaluationJob;
 }
