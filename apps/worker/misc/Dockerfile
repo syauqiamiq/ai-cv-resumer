@@ -26,7 +26,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY package.json yarn.lock ./
 
 # Expose the application port
-EXPOSE 9797
+EXPOSE 8797
 
 # Command to run the worker application
 CMD ["node", "dist/apps/worker/main"]

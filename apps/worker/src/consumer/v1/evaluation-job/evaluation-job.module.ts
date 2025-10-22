@@ -9,7 +9,7 @@ import { EvaluationJob } from 'apps/worker/src/databases/entities/evaluation-job
   imports: [
     TypeOrmModule.forFeature([EvaluationJob]),
     BullModule.registerQueue({
-      name: 'evaluation-queue',
+      name: 'evaluation-queue-v2',
       connection: {
         host: workerENVConfig.redis.host,
         password: workerENVConfig.redis.pass,

@@ -25,18 +25,17 @@ export class EvaluationJob
   jobTitle: string | null;
 
   @Column({
+    name: 'job_description',
+    type: 'text',
+  })
+  jobDescription: string | null;
+
+  @Column({
     name: 'cv_result',
     type: 'jsonb',
     nullable: true,
   })
   cvResult?: any | null;
-
-  @Column({
-    name: 'project_result',
-    type: 'jsonb',
-    nullable: true,
-  })
-  projectResult?: any | null;
 
   @Column({
     name: 'final_result',
@@ -75,13 +74,6 @@ export class EvaluationJob
   cvAttachmentId?: string | null;
 
   @Column({
-    name: 'project_attachment_id',
-    type: 'uuid',
-    nullable: true,
-  })
-  projectAttachmentId?: string | null;
-
-  @Column({
     name: 'user_id',
     type: 'uuid',
     nullable: true,
@@ -91,13 +83,6 @@ export class EvaluationJob
   @ManyToOne(() => UserAttachment, (attachment) => attachment.cvEvaluationJob)
   @JoinColumn({ name: 'cv_attachment_id' })
   cvAttachment?: IUserAttachment | null;
-
-  @ManyToOne(
-    () => UserAttachment,
-    (attachment) => attachment.projectEvaluationJob,
-  )
-  @JoinColumn({ name: 'project_attachment_id' })
-  projectAttachment?: IUserAttachment | null;
 
   @ManyToOne(() => User, (user) => user.evaluationJobs)
   @JoinColumn({ name: 'user_id' })

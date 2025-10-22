@@ -11,7 +11,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EEvaluationJobStatus } from 'apps/worker/src/common/enums/evaluation-job-status.enum';
 import { streamToBuffer } from 'apps/worker/src/common/functions/stream-to-buffer';
 import { evaluateCvPrompt } from 'apps/worker/src/common/prompts/evaluate-cv.prompt';
-import { evaluateProjectReportPrompt } from 'apps/worker/src/common/prompts/evaluate-project-report.prompt';
 import { overallSummaryPrompt } from 'apps/worker/src/common/prompts/overall-summary.prompt';
 import { EvaluationJob } from 'apps/worker/src/databases/entities/evaluation-job.entity';
 import { workerENVConfig } from 'apps/worker/src/env.config';
@@ -20,7 +19,7 @@ import { Readable } from 'stream';
 import { DataSource, Repository } from 'typeorm';
 import { EvaluationJobPayloadDto } from './dto/request/evaluation-job-payload.dto';
 
-@Processor('evaluation-queue')
+@Processor('evaluation-queue-v2')
 export class EvaluationJobConsumer extends WorkerHost {
   private readonly logger = new Logger(EvaluationJobConsumer.name);
 
@@ -74,61 +73,19 @@ export class EvaluationJobConsumer extends WorkerHost {
         workerENVConfig.aws.s3.bucketName,
         evaluationJobData.cvAttachment.path,
       );
-      const projectReportFile = await this.s3Service.getFile(
-        workerENVConfig.aws.s3.bucketName,
-        evaluationJobData.projectAttachment.path,
-      );
 
       const cvBuffer = await streamToBuffer(cvFile.Body as Readable);
-      const projectReportBuffer = await streamToBuffer(
-        projectReportFile.Body as Readable,
-      );
 
       // 2. Extract text from PDF files
       const cvText = await this.pdfService.extractText(cvBuffer);
-      const projectReportText =
-        await this.pdfService.extractText(projectReportBuffer);
 
       // 5. Use Gemini to evaluate CV against Job Description and generate feedback
       let parsedCvResult: any = null;
       if (!evaluationJobData.cvResult) {
-        const combinedCvContextText = `Job Title: ${payload.jobTitle}\n\nCV Text:\n${cvText} `;
-
-        const cvEmbeddedContent = await this.geminiService.embedContent({
-          model: 'gemini-embedding-001',
-          contents: [combinedCvContextText],
-        });
-
-        // 4. Query relevant documents from Chroma based on CV embedding
-
-        if (!cvEmbeddedContent.embeddings[0]) {
-          throw new Error('Failed to generate cv embeddings');
-        }
-
-        const cvContextResult = await this.chromaService.query({
-          collection: 'cv-vector',
-          queryEmbeddings: [cvEmbeddedContent.embeddings[0].values],
-          nResults: 5,
-          where: {
-            $and: [
-              {
-                type: {
-                  $eq: 'cv-context',
-                },
-              },
-              {
-                source: {
-                  $eq: 'initial-ingest',
-                },
-              },
-            ],
-          },
-        });
-
         const cvEvaluationPrompt = evaluateCvPrompt(
           cvText,
           payload.jobTitle,
-          cvContextResult.join('\n'),
+          `This section assesses a candidate's suitability for the role based on four key parameters. First, Technical Skills (40%) assesses the candidate's technical abilities. A score of 1 indicates no relevance, while 5 indicates a perfect match with the technical criteria outlined in the job description. Second, Experience Level (25%) measures the length of experience and the complexity of projects handled—ranging from simple projects lasting less than a year (score 1) to more than five years of experience with high-impact projects (score 5). Next, Relevant Achievements (20%) focuses on the tangible impact of previous work, such as performance improvement or system adoption. The highest score is awarded for significant contributions with measurable results. Finally, Cultural/Collaboration Fit (15%) assesses communication skills, enthusiasm for learning, and teamwork and leadership. A score of 1 indicates these aspects are not present at all, while 5 indicates very strong interpersonal skills consistently demonstrated in work experience.`,
         );
 
         const response = await retry(
@@ -150,117 +107,12 @@ export class EvaluationJobConsumer extends WorkerHost {
         });
       }
 
-      // 6. Use Gemini to evaluate Project Report against Case Study Brief and generate feedback
-
-      let parsedProjectReportResult: any = null;
-      if (!evaluationJobData.projectResult) {
-        const combinedProjectContextText = `Project Report Text:\n${projectReportText} `;
-
-        const projectReportEmbeddedContent =
-          await this.geminiService.embedContent({
-            model: 'gemini-embedding-001',
-            contents: [combinedProjectContextText],
-          });
-
-        // 4. Query relevant documents from Chroma based on CV embedding
-
-        if (!projectReportEmbeddedContent.embeddings[0]) {
-          throw new Error('Failed to generate project report embeddings');
-        }
-
-        const projectReportContextResult = await this.chromaService.query({
-          collection: 'project-vector',
-          queryEmbeddings: [projectReportEmbeddedContent.embeddings[0].values],
-          nResults: 5,
-          where: {
-            $and: [
-              {
-                type: {
-                  $eq: 'project-context',
-                },
-              },
-              {
-                source: {
-                  $eq: 'initial-ingest',
-                },
-              },
-            ],
-          },
-        });
-        const projectReportEvaluationPrompt = evaluateProjectReportPrompt(
-          projectReportText,
-          payload.jobTitle,
-          projectReportContextResult.join('\n'),
-        );
-
-        const projectReportResponse = await retry(
-          () =>
-            this.geminiService.generateContent({
-              model: 'gemini-2.5-flash',
-              contents: projectReportEvaluationPrompt,
-              config: {
-                temperature: 0.1,
-              },
-            }),
-          3,
-          1000,
-        );
-
-        await this.evaluationJobRepository.update(evaluationJobData.id, {
-          status: EEvaluationJobStatus.PROCESSING,
-        });
-
-        parsedProjectReportResult = cleanAIJsonResponse(
-          projectReportResponse.text,
-        );
-
-        await this.evaluationJobRepository.update(evaluationJobData.id, {
-          projectResult: parsedProjectReportResult,
-        });
-      }
-
-      // 7. Use Gemini to evaluate Overall Summary against Job Description and generate feedback
-
-      const jobDescriptionEmbeddedContent =
-        await this.geminiService.embedContent({
-          model: 'gemini-embedding-001',
-          contents: [`Job Description for ${payload.jobTitle}`],
-        });
-
-      // 4. Query relevant documents from Chroma based on CV embedding
-
-      if (!jobDescriptionEmbeddedContent.embeddings[0]) {
-        throw new Error('Failed to generate job description embeddings');
-      }
-
-      const jobDescriptionContextResult = await this.chromaService.query({
-        collection: 'cv-vector',
-        queryEmbeddings: [jobDescriptionEmbeddedContent.embeddings[0].values],
-        nResults: 5,
-        where: {
-          $and: [
-            {
-              type: {
-                $eq: 'cv-context',
-              },
-            },
-            {
-              source: {
-                $eq: 'initial-ingest',
-              },
-            },
-          ],
-        },
-      });
       const overallPrompt = overallSummaryPrompt(
         parsedCvResult
           ? JSON.stringify(parsedCvResult)
           : JSON.stringify(evaluationJobData.cvResult),
-        parsedProjectReportResult
-          ? JSON.stringify(parsedProjectReportResult)
-          : JSON.stringify(evaluationJobData.projectResult),
         payload.jobTitle,
-        jobDescriptionContextResult.join('\n'),
+        payload.jobDescription,
       );
 
       const overallSummaryResponse = await retry(
@@ -281,21 +133,15 @@ export class EvaluationJobConsumer extends WorkerHost {
       );
 
       const finalResult: any = {
-        cv_match_rate: parsedCvResult
-          ? parseFloat(parsedCvResult.cv_score) * 0.2
-          : parseFloat(evaluationJobData.cvResult?.cv_score) * 0.2,
-        cv_feedback: parsedCvResult
-          ? parsedCvResult.feedback
-          : evaluationJobData.cvResult?.feedback,
-        project_score: parsedProjectReportResult
-          ? parsedProjectReportResult.project_report_score
-          : evaluationJobData.projectResult?.project_report_score,
-        project_feedback: parsedProjectReportResult
-          ? parsedProjectReportResult.feedback
-          : evaluationJobData.projectResult?.feedback,
+        job_fitment_score:
+          parsedOverallSummaryResult.job_fitment_score ||
+          evaluationJobData.finalResult?.job_fitment_score,
         overall_summary:
           parsedOverallSummaryResult.overall_summary ||
           evaluationJobData.finalResult?.overall_summary,
+        cv_evaluation: parsedCvResult
+          ? parsedCvResult
+          : evaluationJobData.cvResult,
       };
 
       await this.evaluationJobRepository.update(evaluationJobData.id, {

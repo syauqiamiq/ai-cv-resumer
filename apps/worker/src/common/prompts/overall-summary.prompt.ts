@@ -1,19 +1,18 @@
 export function overallSummaryPrompt(
   cvResult: string,
-  projectReportResult: string,
   jobTitle: string,
-  context: string,
+  jobDescription: string,
 ): string {
   return `
-        You are acting as Human Resource Specialist and AI evaluator for a ${jobTitle} hiring process. Currently, you have the CV Evaluation Result and Project Report Evaluation Result of a candidate.
-        You will provide an overall summary of the candidate's fitment for the ${jobTitle} position based on the combined insights from both evaluations.
+        You are acting as Human Resource Specialist and AI evaluator for a ${jobTitle} hiring process. Currently, you have the CV Evaluation Result of a candidate.
+        You will provide an overall summary of the candidate's fitment for the ${jobTitle} position based on CV Evalutation and provided Job Description.
 
-        Use ONLY the information provided within the context, CV Evaluation Result and Project Report Evaluation Result below.
+        Use ONLY the information provided within the context, CV Evaluation Result and Job Description below.
         Do NOT make assumptions.
         
         ---
-        Context from RAG Retrieval:
-        ${context}
+        Job Description Context:
+        ${jobDescription}
         ---
 
         Now evaluate this CV Evaluation Result:
@@ -21,13 +20,8 @@ export function overallSummaryPrompt(
         ${cvResult}
         ---
 
-        Now evaluate this Project Report Evaluation Result:
-        ---
-        ${projectReportResult}
-        ---
-
         Your task:
-        1. Evaluate the both candidate’s Project Report and CV Evaluation Result based strictly on the provided ${jobTitle} Job Description.
+        1. Evaluate the  candidate CV Evaluation Result based strictly on the provided ${jobTitle} Job Description.
         2. Focus on ${jobTitle} relevance and Overall Summary based on given data and context.
         3. Provide reasoning behind overall summary of this job fitment.
         4. Be concise and to the point, dont add additional JSON fields except defined field below.
@@ -35,6 +29,7 @@ export function overallSummaryPrompt(
         
         JSON schema:
         {
+        "job_fitment_score": <1-5>,
         "overall_summary": <summary>,
         }
     `;

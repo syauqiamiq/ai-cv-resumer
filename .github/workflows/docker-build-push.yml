@@ -3,7 +3,7 @@ name: Build and Push Docker Images
 on:
   push:
     branches:
-      - main
+      - 'v2/preview'
 env:
   REGISTRY: docker.io
   MAIN_APP_IMAGE_NAME: syauqiamiq/ai-cv-resumer
@@ -33,7 +33,7 @@ jobs:
           context: .
           file: ./apps/ai-cv-resumer/misc/Dockerfile
           push: true
-          tags: ${{ env.MAIN_APP_IMAGE_NAME }}:latest
+          tags: ${{ env.MAIN_APP_IMAGE_NAME }}:v2-preview
           platforms: linux/amd64
 
       - name: 📋 Main App Build Summary

@@ -10,7 +10,7 @@ export function evaluateCvPrompt(
         Do NOT make assumptions.
 
         ---
-        Context from RAG Retrieval:
+        Scoring Rubric Context:
         ${context}
         ---
 
@@ -20,7 +20,7 @@ export function evaluateCvPrompt(
         ---
 
         Your task:
-        1. Evaluate the candidate’s CV based strictly on the provided Job Description and Scoring Rubric.
+        1. Evaluate the candidate’s CV based strictly on the provided Scoring Rubric.
         2. Focus on ${jobTitle} relevance, technical depth, clarity, and role alignment.
         3. Score each rubric dimension from 1 (poor) to 5 (excellent).
         4. Provide reasoning behind each score.

@@ -26,7 +26,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY package.json yarn.lock ./
 
 # Expose the application port
-EXPOSE 9898
+EXPOSE 8898
 
 # Command to run the application
 CMD ["node", "dist/apps/ai-cv-resumer/main"]

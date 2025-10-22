@@ -12,7 +12,7 @@ import { UserAttachment } from 'apps/ai-cv-resumer/src/databases/entities/user-a
   imports: [
     TypeOrmModule.forFeature([EvaluationJob, UserAttachment]),
     BullModule.registerQueue({
-      name: 'evaluation-queue',
+      name: 'evaluation-queue-v2',
       connection: {
         host: aiCvResumerENVConfig.redis.host,
         password: aiCvResumerENVConfig.redis.pass,

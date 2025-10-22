@@ -12,13 +12,13 @@ export class CreateEvaluationJobDto {
   cvAttachmentId: string;
 
   @ApiProperty({
-    description: 'UUID of the project attachment to be evaluated',
-    example: '123e4567-e89b-12d3-a456-426614174001',
-    format: 'uuid',
+    description: 'Description of the job position for evaluation context',
+    example: 'Develop and maintain backend services',
+    minLength: 1,
   })
   @IsNotEmpty()
-  @IsUUID()
-  projectAttachmentId: string;
+  @IsString()
+  jobDescription: string;
 
   @ApiProperty({
     description: 'Title of the job position for evaluation context',

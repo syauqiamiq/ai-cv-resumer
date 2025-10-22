@@ -1,27 +1,25 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { ClientKafka } from '@nestjs/microservices';
-import { CreateEvaluationJobDto } from './dto/request/create-evaluation-job.dto';
-import { v4 } from 'uuid';
-import { InjectRepository } from '@nestjs/typeorm';
-import { EvaluationJob } from 'apps/ai-cv-resumer/src/databases/entities/evaluation-job.entity';
-import { Repository } from 'typeorm';
-import { EEvaluationJobStatus } from 'apps/ai-cv-resumer/src/common/enums/evaluation-job-status.enum';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import { S3Service } from '@app/s3';
-import { aiCvResumerENVConfig } from 'apps/ai-cv-resumer/src/env.config';
-import { streamToBuffer } from 'apps/worker/src/common/functions/stream-to-buffer';
-import { Readable } from 'node:stream';
-import { PdfService } from '@app/pdf';
 import { ChromaService } from '@app/chroma';
 import { GeminiService } from '@app/gemini';
-import { UserAttachment } from 'apps/ai-cv-resumer/src/databases/entities/user-attachment.entity';
+import { PdfService } from '@app/pdf';
+import { S3Service } from '@app/s3';
+import { InjectQueue } from '@nestjs/bullmq';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { EEvaluationJobStatus } from 'apps/ai-cv-resumer/src/common/enums/evaluation-job-status.enum';
 import { EUserAttachmentType } from 'apps/ai-cv-resumer/src/common/enums/user-attachment-type.enum';
+import { EvaluationJob } from 'apps/ai-cv-resumer/src/databases/entities/evaluation-job.entity';
+import { UserAttachment } from 'apps/ai-cv-resumer/src/databases/entities/user-attachment.entity';
+import { aiCvResumerENVConfig } from 'apps/ai-cv-resumer/src/env.config';
+import { streamToBuffer } from 'apps/worker/src/common/functions/stream-to-buffer';
+import { Queue } from 'bullmq';
+import { Readable } from 'node:stream';
+import { Repository } from 'typeorm';
+import { CreateEvaluationJobDto } from './dto/request/create-evaluation-job.dto';
 
 @Injectable()
 export class EvaluationJobService {
   constructor(
-    @InjectQueue('evaluation-queue') private evaluationQueue: Queue,
+    @InjectQueue('evaluation-queue-v2') private evaluationQueue: Queue,
     @InjectRepository(EvaluationJob)
     private readonly evaluationJobRepository: Repository<EvaluationJob>,
     @InjectRepository(UserAttachment)
@@ -48,29 +46,11 @@ export class EvaluationJobService {
       throw new BadRequestException('CV Attachment not found');
     }
 
-    const projectAttachment = await this.userAttachmentRepository.findOne({
-      where: {
-        id: createEvaluationJobDto.projectAttachmentId,
-        userId: userId,
-        type: EUserAttachmentType.PROJECT_REPORT,
-      },
-    });
-
-    if (!projectAttachment) {
-      throw new BadRequestException('Project Attachment not found');
-    }
-
-    if (cvAttachment.id === projectAttachment.id) {
-      throw new BadRequestException(
-        'CV Attachment and Project Attachment cannot be the same',
-      );
-    }
-
     // Save evaluation job to database (not implemented in this snippet)
     const savedJob = await this.evaluationJobRepository.save({
       cvAttachmentId: createEvaluationJobDto.cvAttachmentId,
-      projectAttachmentId: createEvaluationJobDto.projectAttachmentId,
       jobTitle: createEvaluationJobDto.jobTitle,
+      jobDescription: createEvaluationJobDto.jobDescription,
       status: EEvaluationJobStatus.QUEUED,
       userId: userId,
     });
@@ -78,12 +58,12 @@ export class EvaluationJobService {
     const jobParam = {
       id: savedJob.id,
       cvAttachmentId: savedJob.cvAttachmentId,
-      projectAttachmentId: savedJob.projectAttachmentId,
       jobTitle: savedJob.jobTitle,
+      jobDescription: savedJob.jobDescription,
       createdAt: savedJob.createdAt,
     };
-    // Emit event to Kafka topic
-    await this.evaluationQueue.add('evaluation-job', jobParam, {
+
+    await this.evaluationQueue.add('evaluation-job-v2', jobParam, {
       attempts: 3,
       backoff: { type: 'exponential', delay: 5000 },
       removeOnComplete: {
@@ -137,12 +117,12 @@ export class EvaluationJobService {
     const jobParam = {
       id: foundJob.id,
       cvAttachmentId: foundJob.cvAttachmentId,
-      projectAttachmentId: foundJob.projectAttachmentId,
       jobTitle: foundJob.jobTitle,
+      jobDescription: foundJob.jobDescription,
       createdAt: foundJob.createdAt,
     };
-    // Emit event to Kafka topic
-    await this.evaluationQueue.add('evaluation-job', jobParam, {
+
+    await this.evaluationQueue.add('evaluation-job-v2', jobParam, {
       attempts: 3,
       backoff: { type: 'exponential', delay: 5000 },
       removeOnComplete: {
@@ -172,13 +152,7 @@ export class EvaluationJobService {
     return {
       jobId: job.id,
       status: job.status,
-      result: job.finalResult && {
-        cvMatchRate: job.finalResult?.cv_match_rate || null,
-        cvFeedback: job.finalResult?.cv_feedback || null,
-        projectScore: job.finalResult?.project_score || null,
-        projectFeedback: job.finalResult?.project_feedback || null,
-        overallSummary: job.finalResult?.overall_summary || null,
-      },
+      result: job.finalResult,
     };
   }
 
